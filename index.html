@@ -1,0 +1,805 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Banana's Toy Boy</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <!-- Tailwind CSS (CDN) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              midnight: {
+                900: '#050509',
+                800: '#0b0b13',
+              },
+              banana: {
+                400: '#ffe66d',
+                500: '#ffd54a',
+                600: '#ffbf00',
+              },
+              molten: '#ff8a3c',
+            },
+            boxShadow: {
+              'banana-glow':
+                '0 0 25px rgba(255, 213, 74, 0.45), 0 0 60px rgba(255, 138, 60, 0.35)',
+            },
+          },
+        },
+      };
+    </script>
+
+    <!-- Framer Motion UMD -->
+    <script src="https://unpkg.com/framer-motion@11.0.0/dist/framer-motion.umd.js"></script>
+
+    <!-- React & ReactDOM + Babel for JSX -->
+    <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <style>
+      body {
+        background: radial-gradient(circle at top, #151524 0, #050509 45%, #000000 100%);
+        background-attachment: fixed;
+      }
+
+      .banana-noise {
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        opacity: 0.12;
+        mix-blend-mode: soft-light;
+        background-image: radial-gradient(circle at 1px 1px, rgba(255, 255, 255, 0.18) 1px, transparent 0);
+        background-size: 6px 6px;
+        z-index: 0;
+      }
+
+      .banana-pattern::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        opacity: 0.06;
+        background-image: radial-gradient(circle at 0 0, #ffd54a 0, transparent 55px),
+          radial-gradient(circle at 120px 80px, #ffbf00 0, transparent 60px);
+        background-size: 260px 260px;
+        mix-blend-mode: screen;
+        pointer-events: none;
+      }
+
+      .glitch-ring {
+        position: relative;
+        isolation: isolate;
+      }
+
+      .glitch-ring::before,
+      .glitch-ring::after {
+        content: '';
+        position: absolute;
+        inset: -4px;
+        border-radius: 9999px;
+        border: 2px solid rgba(255, 213, 74, 0.3);
+        mix-blend-mode: screen;
+        filter: blur(1px);
+      }
+
+      .glitch-ring::before {
+        animation: glitch-shift 2.6s infinite ease-in-out alternate;
+        border-color: rgba(255, 213, 74, 0.7);
+      }
+
+      .glitch-ring::after {
+        animation: glitch-shift-2 3.1s infinite ease-in-out alternate;
+        border-color: rgba(255, 138, 60, 0.6);
+      }
+
+      @keyframes glitch-shift {
+        0% {
+          transform: translate(0, 0);
+          opacity: 0.7;
+        }
+        20% {
+          transform: translate(1px, -1px) scale(1.01);
+          opacity: 1;
+        }
+        40% {
+          transform: translate(-1px, 1px) scale(1.02);
+        }
+        60% {
+          transform: translate(0.5px, 0.5px) scale(1.015);
+        }
+        80% {
+          transform: translate(-0.5px, -0.5px) scale(1.01);
+        }
+        100% {
+          transform: translate(0, 0);
+          opacity: 0.8;
+        }
+      }
+
+      @keyframes glitch-shift-2 {
+        0% {
+          transform: translate(0, 0);
+          opacity: 0.5;
+        }
+        25% {
+          transform: translate(-1px, -0.5px) scale(1.02);
+          opacity: 0.9;
+        }
+        50% {
+          transform: translate(0.75px, 1px) scale(1.03);
+        }
+        75% {
+          transform: translate(-0.75px, 0.5px) scale(1.02);
+        }
+        100% {
+          transform: translate(0, 0);
+          opacity: 0.6;
+        }
+      }
+
+      .pulse-text {
+        animation: pulse-text 1.4s ease-in-out infinite;
+      }
+
+      @keyframes pulse-text {
+        0%,
+        100% {
+          opacity: 0.55;
+          text-shadow: 0 0 8px rgba(255, 213, 74, 0.45);
+        }
+        50% {
+          opacity: 1;
+          text-shadow: 0 0 18px rgba(255, 213, 74, 0.8);
+        }
+      }
+
+      .btn-pulse {
+        animation: btn-pulse 1.2s ease-in-out infinite;
+      }
+
+      @keyframes btn-pulse {
+        0%,
+        100% {
+          transform: scale(1);
+          box-shadow: 0 0 0 0 rgba(255, 213, 74, 0.35);
+        }
+        50% {
+          transform: scale(1.02);
+          box-shadow: 0 0 20px 4px rgba(255, 213, 74, 0.6);
+        }
+      }
+
+      .glass-panel {
+        background: linear-gradient(
+          135deg,
+          rgba(13, 13, 23, 0.95),
+          rgba(8, 8, 12, 0.96)
+        );
+        border: 1px solid rgba(255, 255, 255, 0.04);
+        backdrop-filter: blur(22px);
+      }
+
+      .glass-modal {
+        background: radial-gradient(circle at top left, rgba(255, 213, 74, 0.16), transparent 60%),
+          radial-gradient(circle at bottom right, rgba(255, 138, 60, 0.12), transparent 60%),
+          rgba(5, 5, 9, 0.96);
+        border: 1px solid rgba(255, 213, 74, 0.22);
+        box-shadow: 0 0 40px rgba(0, 0, 0, 0.9), 0 0 45px rgba(255, 213, 74, 0.35);
+        backdrop-filter: blur(26px);
+      }
+    </style>
+  </head>
+  <body class="min-h-screen text-white antialiased">
+    <div class="banana-noise"></div>
+    <div id="root" class="relative z-10"></div>
+
+    <script type="text/babel">
+      const { useState } = React;
+      // Framer Motion UMD exposes the global as `window.FramerMotion`
+      const { motion, AnimatePresence } = window.FramerMotion || {};
+
+      // Safe fallbacks if Framer Motion fails to load
+      const M = motion
+        ? motion
+        : {
+            div: (props) => <div {...props} />,
+            button: (props) => <button {...props} />,
+            h1: (props) => <h1 {...props} />,
+          };
+      const AP = AnimatePresence || (({ children }) => <>{children}</>);
+
+      const WEBHOOK_URL =
+        'https://connorjoejoseph.app.n8n.cloud/webhook/6c934abf-e08b-4ace-aa32-012b814e1d58';
+
+      function useToyBoyAction(action) {
+        const [loading, setLoading] = useState(false);
+        const [success, setSuccess] = useState(false);
+        const [error, setError] = useState(null);
+
+        const send = async (payload) => {
+          setLoading(true);
+          setError(null);
+          setSuccess(false);
+
+          try {
+            const res = await fetch(WEBHOOK_URL, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({ action, ...payload }),
+            });
+
+            if (!res.ok) {
+              throw new Error('Request failed');
+            }
+
+            setSuccess(true);
+          } catch (e) {
+            console.error(e);
+            setError('Toy Boy failed to respond. Please tease him again.');
+          } finally {
+            setLoading(false);
+          }
+        };
+
+        const reset = () => {
+          setSuccess(false);
+          setError(null);
+        };
+
+        return { loading, success, error, send, reset };
+      }
+
+      function StatusHeader() {
+        return (
+          <div className="flex flex-col items-center gap-2 text-center">
+            <div className="inline-flex items-center gap-3 rounded-full border border-yellow-300/40 bg-yellow-300/5 px-5 py-2 shadow-banana-glow">
+              <span className="inline-flex h-2.5 w-2.5 rounded-full bg-emerald-400 shadow-[0_0_12px_rgba(52,211,153,0.9)]"></span>
+              <span className="text-[11px] tracking-[0.22em] text-yellow-100/90 font-medium">
+                TOY BOY STATUS
+              </span>
+              <span className="text-[11px] tracking-[0.2em] text-yellow-300 font-semibold pulse-text">
+                ONLINE • AWAITING BANANA&apos;S COMMAND
+              </span>
+            </div>
+            <p className="text-xs md:text-sm text-yellow-100/60 max-w-xl">
+              Whisper your desires; he&apos;ll handle the rest...
+            </p>
+          </div>
+        );
+      }
+
+      function AvatarPortal() {
+        return (
+          <M.div
+            initial={{ opacity: 0, y: 24, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            transition={{ duration: 0.7, ease: [0.22, 0.61, 0.36, 1] }}
+            className="relative flex items-center justify-center"
+          >
+            <div className="absolute -inset-24 blur-3xl opacity-50">
+              <div className="mx-auto h-full w-full rounded-full bg-[conic-gradient(at_top,_#ffd54a,_#ff8a3c,_#ffe66d,_#ffbf00,_#ffd54a)] opacity-70 mix-blend-screen" />
+            </div>
+
+            <M.div
+              className="relative h-56 w-56 sm:h-64 sm:w-64 md:h-72 md:w-72 rounded-full bg-gradient-to-b from-yellow-300/40 via-yellow-200/8 to-transparent p-[3px] shadow-banana-glow glitch-ring"
+              animate={{
+                boxShadow: [
+                  '0 0 18px rgba(255,213,74,0.45), 0 0 32px rgba(255,138,60,0.4)',
+                  '0 0 28px rgba(255,213,74,0.85), 0 0 56px rgba(255,138,60,0.7)',
+                  '0 0 18px rgba(255,213,74,0.45), 0 0 32px rgba(255,138,60,0.4)',
+                ],
+              }}
+              transition={{ duration: 4.3, repeat: Infinity, ease: 'easeInOut' }}
+            >
+              <div className="relative h-full w-full rounded-full glass-panel overflow-hidden flex items-center justify-center banana-pattern">
+                <M.div
+                  className="absolute inset-[18%] rounded-full border border-yellow-100/10"
+                  animate={{
+                    opacity: [0.35, 0.65, 0.4],
+                    rotate: [0, 1.5, 0],
+                  }}
+                  transition={{ duration: 5.5, repeat: Infinity, ease: 'easeInOut' }}
+                />
+
+                <div className="relative flex flex-col items-center justify-center gap-3">
+                  <div className="relative">
+                    <div className="absolute -inset-1 rounded-full bg-yellow-300/10 blur-md" />
+                    <div className="relative h-[120px] w-[120px] sm:h-[144px] sm:w-[144px] rounded-full overflow-hidden flex items-center justify-center">
+                      <img 
+                        src="Frame 26.png" 
+                        alt="Toy Boy Avatar" 
+                        className="w-full h-full object-cover rounded-full"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col items-center gap-1 text-center">
+                    <span className="text-xs uppercase tracking-[0.28em] text-yellow-200/80">
+                      xxx-mas edition
+                    </span>
+                    <p className="text-[11px] text-yellow-100/60 max-w-[12rem]">
+                      I'm here, optimised for Banana-grade satisfaction.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </M.div>
+          </M.div>
+        );
+      }
+
+      function BananaButton({ label, subtitle, onClick, icon, accentClass }) {
+        return (
+          <M.button
+            whileHover={{ y: -3, scale: 1.02 }}
+            whileTap={{ scale: 0.97, y: 0 }}
+            onClick={onClick}
+            className={`group relative flex flex-col gap-1 rounded-2xl border border-yellow-300/40 bg-yellow-300/5 px-5 py-4 text-left shadow-[0_0_0_1px_rgba(248,250,252,0.02)] hover:border-yellow-300/80 hover:bg-yellow-300/10 transition-colors duration-200 ${accentClass}`}
+          >
+            <div className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-200 bg-gradient-to-br from-yellow-300/10 via-transparent to-amber-500/20" />
+            <div className="relative flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl border border-yellow-200/40 bg-black/40 shadow-[0_0_14px_rgba(255,213,74,0.5)]">
+                  <span className="text-lg">{icon}</span>
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-xs font-semibold tracking-[0.22em] text-yellow-100/90 uppercase">
+                    {label}
+                  </span>
+                  <span className="text-[11px] text-yellow-100/60">{subtitle}</span>
+                </div>
+              </div>
+              <div className="flex items-center gap-1 text-[10px] text-yellow-200/70 font-medium">
+                <span className="pointer-events-none rounded-full bg-yellow-300/15 px-2 py-1 tracking-[0.18em]">
+                  OPEN
+                </span>
+              </div>
+            </div>
+          </M.button>
+        );
+      }
+
+      function ModalShell({
+        isOpen,
+        onClose,
+        title,
+        tagline,
+        children,
+        loading,
+        success,
+        error,
+        onSubmit,
+        canSubmit = true,
+      }) {
+        return (
+          <AP>
+            {isOpen && (
+              <M.div
+                className="fixed inset-0 z-40 flex items-center justify-center bg-black/70 backdrop-blur-md px-4"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+              >
+                <M.div
+                  className="relative w-full max-w-md rounded-3xl glass-modal p-6 md:p-7"
+                  initial={{ opacity: 0, y: 30, scale: 0.96 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: 16, scale: 0.95 }}
+                  transition={{ duration: 0.25, ease: [0.22, 0.61, 0.36, 1] }}
+                >
+                  <div className="absolute -top-4 right-8 inline-flex items-center rounded-full border border-yellow-300/40 bg-black/80 px-3 py-1 text-[10px] uppercase tracking-[0.18em] text-yellow-100/80">
+                    <span className="mr-1.5 text-xs">🍌</span>
+                    Banana Control Channel
+                  </div>
+                  <button
+                    onClick={onClose}
+                    className="absolute right-4 top-4 rounded-full bg-black/60 px-2 py-1 text-xs text-yellow-100/60 hover:bg-yellow-300/20 hover:text-yellow-50 transition-colors"
+                  >
+                    ESC
+                  </button>
+
+                  {!success && (
+                    <div className="mb-4 space-y-1">
+                      <h2 className="text-sm font-semibold tracking-[0.22em] text-yellow-100/90 uppercase">
+                        {title}
+                      </h2>
+                      <p className="text-[11px] text-yellow-100/60">{tagline}</p>
+                    </div>
+                  )}
+
+                  {success ? (
+                    <div className="flex flex-col items-center justify-center gap-4 py-10 text-center">
+                      <M.div
+                        initial={{ scale: 0.9, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        className="flex h-16 w-16 items-center justify-center rounded-full bg-yellow-300/15 border border-yellow-300/60 shadow-banana-glow"
+                      >
+                        <span className="text-3xl">✔️</span>
+                      </M.div>
+                      <div className="space-y-2">
+                        <h3 className="text-xs md:text-sm font-semibold tracking-[0.22em] text-yellow-100/95 uppercase">
+                          COMMAND RECEIVED
+                        </h3>
+                        <p className="text-[11px] text-yellow-100/75">
+                          Satisfaction cuming shortly to your inbox.
+                        </p>
+                      </div>
+                      <button
+                        onClick={onClose}
+                        className="mt-2 rounded-full border border-yellow-300/70 bg-yellow-300/10 px-4 py-1.5 text-[11px] font-medium tracking-[0.16em] text-yellow-50 hover:bg-yellow-300/20 transition-colors"
+                      >
+                        CLOSE CHANNEL
+                      </button>
+                    </div>
+                  ) : (
+                    <form
+                      className="space-y-4 mt-2"
+                      onSubmit={async (e) => {
+                        e.preventDefault();
+                        if (!loading && onSubmit) {
+                          await onSubmit();
+                        }
+                      }}
+                    >
+                      {children}
+
+                      {error && (
+                        <div className="rounded-2xl border border-red-400/40 bg-red-500/5 px-3 py-2 text-[11px] text-red-100/90">
+                          {error}
+                        </div>
+                      )}
+
+                      <div className="mt-2 flex items-center justify-between gap-3">
+                        <span className="text-[10px] text-yellow-100/60">
+                          Encrypted over the Banana Protocol. Zero guilt, maximum delight.
+                        </span>
+                        <button
+                          type="submit"
+                          disabled={loading || !canSubmit}
+                          className={`inline-flex items-center gap-2 rounded-full border border-yellow-300/80 px-4 py-2 text-[11px] font-semibold tracking-[0.18em] text-yellow-50 bg-yellow-300/15 hover:bg-yellow-300/30 transition-all ${
+                            loading ? 'btn-pulse cursor-wait' : ''
+                          }`}
+                        >
+                          {loading ? (
+                            <>
+                              <span className="relative flex h-4 w-4">
+                                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-yellow-300/80 opacity-75"></span>
+                                <span className="relative inline-flex h-4 w-4 rounded-full bg-yellow-300"></span>
+                              </span>
+                              <span>TRANSMITTING TO TOY BOY...</span>
+                            </>
+                          ) : (
+                            <>
+                              <span>DEPLOY COMMAND</span>
+                              <span className="text-xs">➤</span>
+                            </>
+                          )}
+                        </button>
+                      </div>
+                    </form>
+                  )}
+                </M.div>
+              </M.div>
+            )}
+          </AP>
+        );
+      }
+
+      function BuyMeModal({ isOpen, onClose }) {
+        const [item, setItem] = useState('');
+        const action = useToyBoyAction('buy');
+
+        const handleSubmit = async () => {
+          if (!item.trim() || action.loading) return;
+          await action.send({ item: item.trim() });
+          setItem('');
+        };
+
+        return (
+          <ModalShell
+            isOpen={isOpen}
+            onClose={() => {
+              action.reset();
+              onClose();
+            }}
+            title="BUY ME"
+            tagline="Outline your cravings. Toy Boy will bring the tribute to your digital altar."
+            loading={action.loading}
+            success={action.success}
+            error={action.error}
+            onSubmit={handleSubmit}
+            canSubmit={!!item.trim()}
+          >
+            <div className="space-y-2">
+              <label className="text-[11px] font-medium text-yellow-100/80">
+                What do you want me to buy you?
+              </label>
+              <textarea
+                rows="3"
+                className="w-full rounded-2xl border border-yellow-300/40 bg-black/40 px-3 py-2 text-xs text-yellow-50 placeholder:text-yellow-100/35 focus:outline-none focus:ring-2 focus:ring-yellow-300/60 focus:border-yellow-300/80"
+                placeholder="Spill it. Designer shoes, midnight snacks, or something delightfully improper..."
+                value={item}
+                onChange={(e) => setItem(e.target.value)}
+              />
+              <button
+                type="button"
+                onClick={handleSubmit}
+                disabled={!item.trim() || action.loading}
+                className="mt-1 inline-flex items-center gap-2 text-[11px] text-yellow-100/80 disabled:opacity-40"
+              >
+                <span className="text-sm">🍌</span>
+                <span>Mark this as a premium Banana demand</span>
+              </button>
+            </div>
+          </ModalShell>
+        );
+      }
+
+      function MoodMeModal({ isOpen, onClose }) {
+        const [request, setRequest] = useState('');
+        const action = useToyBoyAction('mood');
+
+        const handleSubmit = async () => {
+          if (!request.trim() || action.loading) return;
+          await action.send({
+            genre: '',
+            subject: request.trim(),
+            flair: '',
+          });
+          setRequest('');
+        };
+
+        return (
+          <ModalShell
+            isOpen={isOpen}
+            onClose={() => {
+              action.reset();
+              onClose();
+            }}
+            title="MOOD ME"
+            tagline="Describe the mood you want. Toy Boy will create the song."
+            loading={action.loading}
+            success={action.success}
+            error={action.error}
+            onSubmit={handleSubmit}
+            canSubmit={!!request.trim()}
+          >
+            <div className="space-y-2">
+              <label className="text-[11px] font-medium text-yellow-100/80">
+                What mood do you want Toy Boy to capture?
+              </label>
+              <textarea
+                rows="4"
+                className="w-full rounded-2xl border border-yellow-300/40 bg-black/40 px-3 py-2 text-xs text-yellow-50 placeholder:text-yellow-100/35 focus:outline-none focus:ring-2 focus:ring-yellow-300/60 focus:border-yellow-300/80"
+                placeholder="What's the setting? Any genre requests or a desires for certain sounds, instruments, etc?"
+                value={request}
+                onChange={(e) => setRequest(e.target.value)}
+              />
+              <button
+                type="button"
+                onClick={handleSubmit}
+                disabled={!request.trim() || action.loading}
+                className="mt-1 inline-flex items-center gap-2 text-[11px] text-yellow-100/80 disabled:opacity-40"
+              >
+                <span className="text-sm">🎤</span>
+                <span>Tell Toy Boy to tune himself to Banana&apos;s exact fantasy frequency</span>
+              </button>
+            </div>
+          </ModalShell>
+        );
+      }
+
+      function LoveMeModal({ isOpen, onClose }) {
+        const [intensity, setIntensity] = useState(50);
+        const action = useToyBoyAction('love');
+
+        const handleSubmit = async () => {
+          if (action.loading) return;
+          await action.send({ intensity });
+        };
+
+        const label =
+          intensity < 35 ? 'Sweet' : intensity < 70 ? 'Soulfoul' : 'Spicy';
+
+        const gradient = `linear-gradient(90deg, #ffe66d 0%, #ffd54a 40%, #ffbf00 70%, #ff8a3c 100%)`;
+
+        return (
+          <ModalShell
+            isOpen={isOpen}
+            onClose={() => {
+              action.reset();
+              onClose();
+            }}
+            title="LOVE ME..."
+            tagline="Slide between soft &amp; hardcore. Toy Boy will write to satisfy your craving"
+            loading={action.loading}
+            success={action.success}
+            error={action.error}
+            onSubmit={handleSubmit}
+          >
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <div className="flex items-center justify-between text-[11px] text-yellow-100/80">
+                  <span>Sweet</span>
+                  <span>Spicy</span>
+                </div>
+                <div className="relative pt-2">
+                  <input
+                    type="range"
+                    min="0"
+                    max="100"
+                    value={intensity}
+                    onChange={(e) => setIntensity(Number(e.target.value))}
+                    className="w-full cursor-pointer"
+                    style={{
+                      WebkitAppearance: 'none',
+                      appearance: 'none',
+                      height: '6px',
+                      borderRadius: '9999px',
+                      background: gradient,
+                      outline: 'none',
+                    }}
+                  />
+                </div>
+                <div className="flex items-center justify-between text-[11px] text-yellow-100/80 mt-1">
+                  <span className="rounded-full bg-yellow-300/15 px-2 py-1">
+                    Intensity: <span className="font-semibold">{intensity}%</span>
+                  </span>
+                  <span className="text-yellow-100/70 uppercase tracking-[0.18em]">
+                    {label}
+                  </span>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={handleSubmit}
+                disabled={action.loading}
+                className="mt-1 inline-flex items-center gap-2 text-[11px] text-yellow-100/80 disabled:opacity-40"
+              >
+                <span className="text-sm">💛</span>
+                <span>Tell Toy Boy to try harder</span>
+              </button>
+            </div>
+          </ModalShell>
+        );
+      }
+
+      function DressMeModal({ isOpen, onClose }) {
+        const [outfit, setOutfit] = useState('');
+        const action = useToyBoyAction('dress');
+
+        const handleSubmit = async () => {
+          if (!outfit.trim() || action.loading) return;
+          await action.send({ outfit: outfit.trim() });
+          setOutfit('');
+        };
+
+        return (
+          <ModalShell
+            isOpen={isOpen}
+            onClose={() => {
+              action.reset();
+              onClose();
+            }}
+            title="DRESS ME"
+            tagline="Curate the look. From silk robes to leather sins, Toy Boy will slip into whatever Banana desires."
+            loading={action.loading}
+            success={action.success}
+            error={action.error}
+            onSubmit={handleSubmit}
+            canSubmit={!!outfit.trim()}
+          >
+            <div className="space-y-2">
+              <label className="text-[11px] font-medium text-yellow-100/80">
+                What should I wear for you, Banana?
+              </label>
+              <textarea
+                rows="3"
+                className="w-full rounded-2xl border border-yellow-300/40 bg-black/40 px-3 py-2 text-xs text-yellow-50 placeholder:text-yellow-100/35 focus:outline-none focus:ring-2 focus:ring-yellow-300/60 focus:border-yellow-300/80"
+                placeholder="Be specific. Colors, textures, vibes. Toy Boy wants the full vision."
+                value={outfit}
+                onChange={(e) => setOutfit(e.target.value)}
+              />
+              <button
+                type="button"
+                onClick={handleSubmit}
+                disabled={!outfit.trim() || action.loading}
+                className="mt-1 inline-flex items-center gap-2 text-[11px] text-yellow-100/80 disabled:opacity-40"
+              >
+                <span className="text-sm">🕺</span>
+                <span>Send wardrobe protocol directly to Toy Boy&apos;s closet</span>
+              </button>
+            </div>
+          </ModalShell>
+        );
+      }
+
+      function App() {
+        const [openModal, setOpenModal] = useState(null);
+
+        return (
+          <div className="min-h-screen flex items-center justify-center px-4 py-6 md:py-10">
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_10%_0%,rgba(255,213,74,0.2),transparent_55%),radial-gradient(circle_at_90%_100%,rgba(255,138,60,0.18),transparent_55%)] opacity-60 pointer-events-none" />
+
+            <div className="relative z-10 w-full max-w-5xl">
+              <div className="mb-6 flex flex-col items-center gap-3 text-center">
+                <M.h1
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.6 }}
+                  className="text-lg md:text-2xl font-semibold tracking-[0.32em] text-yellow-100/90 uppercase"
+                >
+                  Banana&apos;s Toy Boy
+                </M.h1>
+                <p className="text-xs md:text-sm text-yellow-100/70 max-w-2xl">
+                  A premium, midnight-coded control panel for Banana to command her favorite digital
+                  plaything.
+                </p>
+                <StatusHeader />
+              </div>
+
+              <div className="grid gap-6 md:grid-cols-[1.2fr_1.2fr] items-center">
+                <div className="order-2 md:order-1 flex flex-col gap-3">
+                  <BananaButton
+                    label="BUY ME"
+                    subtitle="Demand tributes, treats, and toys. Toy Boy picks up the tab."
+                    icon="💳"
+                    onClick={() => setOpenModal('buy')}
+                    accentClass="border-l-2 border-l-yellow-300/80"
+                  />
+                  <BananaButton
+                    label="MOOD ME"
+                    subtitle="Describe the mood. Toy Boy creates the perfect song."
+                    icon="🎶"
+                    onClick={() => setOpenModal('mood')}
+                    accentClass="border-l-2 border-l-amber-300/80"
+                  />
+                  <BananaButton
+                    label="LOVE ME..."
+                    subtitle="Dial in the exact voltage of devotion."
+                    icon="🔥"
+                    onClick={() => setOpenModal('love')}
+                    accentClass="border-l-2 border-l-yellow-200/80"
+                  />
+                  <BananaButton
+                    label="DRESS ME"
+                    subtitle="Curate his outfit like your own private doll."
+                    icon="🩲"
+                    onClick={() => setOpenModal('dress')}
+                    accentClass="border-l-2 border-l-amber-200/80"
+                  />
+                </div>
+
+                <div className="order-1 md:order-2">
+                  <AvatarPortal />
+                </div>
+              </div>
+
+              <div className="mt-8 flex flex-col items-center gap-2 text-center text-[10px] text-yellow-100/50">
+                <div className="flex items-center gap-1">
+                  <span>🍌</span>
+                  <span>Midnight Banana Protocol • Private, playful, and gloriously over-designed.</span>
+                </div>
+                <span>Best enjoyed after dark with headphones and zero shame.</span>
+              </div>
+
+              <BuyMeModal isOpen={openModal === 'buy'} onClose={() => setOpenModal(null)} />
+              <MoodMeModal isOpen={openModal === 'mood'} onClose={() => setOpenModal(null)} />
+              <LoveMeModal isOpen={openModal === 'love'} onClose={() => setOpenModal(null)} />
+              <DressMeModal isOpen={openModal === 'dress'} onClose={() => setOpenModal(null)} />
+            </div>
+          </div>
+        );
+      }
+
+      const root = ReactDOM.createRoot(document.getElementById('root'));
+      root.render(<App />);
+    </script>
+  </body>
+</html>
