@@ -100,7 +100,7 @@ export default function Step5() {
         className="text-white font-manrope text-base leading-relaxed max-w-[320px] px-2"
       >
         Happy Valentine's Day my love. I miss you more than this website could
-        possibly calculate.
+        possibly communicate.
       </motion.p>
 
       {/* Claim button / Voucher */}
