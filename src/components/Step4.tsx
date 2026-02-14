@@ -25,14 +25,12 @@ export default function Step4({ onNext }: Step4Props) {
     const container = containerRef.current;
     if (!canvas || !container) return;
 
-    const rect = container.getBoundingClientRect();
+    // Use offsetWidth/offsetHeight for the content box (excludes border)
+    const w = container.offsetWidth;
+    const h = container.offsetHeight;
     const dpr = window.devicePixelRatio || 1;
-    const w = Math.ceil(rect.width);
-    const h = Math.ceil(rect.height);
     canvas.width = w * dpr;
     canvas.height = h * dpr;
-    canvas.style.width = `${w}px`;
-    canvas.style.height = `${h}px`;
 
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
@@ -147,13 +145,13 @@ export default function Step4({ onNext }: Step4Props) {
         <img
           src="/scratch.png"
           alt="Hidden message"
-          className="absolute inset-0 w-full h-full object-cover"
+          className="absolute inset-0 w-full h-full object-cover rounded-3xl"
         />
 
         {/* Scratch canvas overlay */}
         <canvas
           ref={canvasRef}
-          className="absolute inset-0 w-full h-full cursor-crosshair"
+          className="absolute inset-0 w-full h-full cursor-crosshair rounded-3xl"
           style={{ touchAction: "none" }}
           onMouseDown={handleStart}
           onMouseMove={handleMove}
