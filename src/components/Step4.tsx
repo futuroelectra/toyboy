@@ -5,14 +5,19 @@ interface Step4Props {
   onNext: () => void;
 }
 
+// How many move events before the button appears.
+// A casual swipe across the card fires ~100-200 events,
+// so 150 ≈ one or two good back-and-forth strokes.
+const SCRATCH_THRESHOLD = 150;
+
 export default function Step4({ onNext }: Step4Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const isDrawing = useRef(false);
-  const scratchCount = useRef(0);
-  const [percentCleared, setPercentCleared] = useState(0);
+  const strokeTotal = useRef(0);
+  const [progress, setProgress] = useState(0);
   const [canvasReady, setCanvasReady] = useState(false);
-  const canFinish = percentCleared > 40;
+  const canFinish = progress >= 100;
 
   // Initialize canvas with silver overlay
   useEffect(() => {
@@ -20,7 +25,6 @@ export default function Step4({ onNext }: Step4Props) {
     const container = containerRef.current;
     if (!canvas || !container) return;
 
-    // Wait a frame for layout to settle, then size canvas to match exactly
     const rect = container.getBoundingClientRect();
     const dpr = window.devicePixelRatio || 1;
     const w = Math.ceil(rect.width);
@@ -35,21 +39,21 @@ export default function Step4({ onNext }: Step4Props) {
     ctx.scale(dpr, dpr);
 
     // Create metallic silver gradient
-    const gradient = ctx.createLinearGradient(0, 0, rect.width, rect.height);
+    const gradient = ctx.createLinearGradient(0, 0, w, h);
     gradient.addColorStop(0, "#d1d5db");
     gradient.addColorStop(0.3, "#e5e7eb");
     gradient.addColorStop(0.5, "#c0c0c0");
     gradient.addColorStop(0.7, "#d4d4d8");
     gradient.addColorStop(1, "#b8b8bd");
     ctx.fillStyle = gradient;
-    ctx.fillRect(0, 0, rect.width, rect.height);
+    ctx.fillRect(0, 0, w, h);
 
-    // Add "Scratch here" text
+    // Add hint text
     ctx.fillStyle = "rgba(100, 100, 100, 0.5)";
-    ctx.font = `600 ${Math.min(rect.width * 0.06, 18)}px Manrope, sans-serif`;
+    ctx.font = `600 ${Math.min(w * 0.06, 18)}px Manrope, sans-serif`;
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
-    ctx.fillText("✨ Scratch to reveal ✨", rect.width / 2, rect.height / 2);
+    ctx.fillText("✨ Scratch to reveal ✨", w / 2, h / 2);
 
     setCanvasReady(true);
   }, []);
@@ -70,40 +74,16 @@ export default function Step4({ onNext }: Step4Props) {
     []
   );
 
-  const scratch = useCallback(
-    (x: number, y: number) => {
-      const canvas = canvasRef.current;
-      if (!canvas) return;
-      const ctx = canvas.getContext("2d");
-      if (!ctx) return;
-
-      ctx.globalCompositeOperation = "destination-out";
-      ctx.beginPath();
-      ctx.arc(x, y, 32, 0, Math.PI * 2);
-      ctx.fill();
-    },
-    []
-  );
-
-  const calculateCleared = useCallback(() => {
+  const scratch = useCallback((x: number, y: number) => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-    const pixels = imageData.data;
-    let transparent = 0;
-    let sampled = 0;
-    // Sample every 16th pixel for performance on high-DPI screens
-    const step = 16 * 4;
-
-    for (let i = 3; i < pixels.length; i += step) {
-      sampled++;
-      if (pixels[i] === 0) transparent++;
-    }
-
-    setPercentCleared(Math.round((transparent / sampled) * 100));
+    ctx.globalCompositeOperation = "destination-out";
+    ctx.beginPath();
+    ctx.arc(x, y, 34, 0, Math.PI * 2);
+    ctx.fill();
   }, []);
 
   const handleStart = useCallback(
@@ -123,20 +103,18 @@ export default function Step4({ onNext }: Step4Props) {
       const coords = getCoords(e);
       if (coords) {
         scratch(coords.x, coords.y);
-        scratchCount.current++;
-        // Recalculate every 15 strokes so progress updates during scratching
-        if (scratchCount.current % 15 === 0) {
-          calculateCleared();
-        }
+        strokeTotal.current++;
+        // Update progress bar based on stroke count
+        const pct = Math.min(100, Math.round((strokeTotal.current / SCRATCH_THRESHOLD) * 100));
+        setProgress(pct);
       }
     },
-    [getCoords, scratch, calculateCleared]
+    [getCoords, scratch]
   );
 
   const handleEnd = useCallback(() => {
     isDrawing.current = false;
-    calculateCleared();
-  }, [calculateCleared]);
+  }, []);
 
   return (
     <div className="flex flex-col items-center justify-center text-center min-h-[60vh] gap-5">
@@ -192,7 +170,7 @@ export default function Step4({ onNext }: Step4Props) {
             <div className="h-1 rounded-full bg-white/10 overflow-hidden">
               <motion.div
                 className="h-full rounded-full bg-white/40"
-                animate={{ width: `${percentCleared}%` }}
+                animate={{ width: `${progress}%` }}
                 transition={{ duration: 0.3 }}
               />
             </div>

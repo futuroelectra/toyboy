@@ -30,7 +30,7 @@ const questions: Question[] = [
   {
     question:
       "If I was stranded on an island, what is the one thing I couldn't live without?",
-    options: ["Water", "A Knife", "Banana"],
+    options: ["Water", "Coconut", "Banana"],
     correctIndex: 2,
   },
 ];
