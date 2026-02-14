@@ -9,9 +9,10 @@ export default function Step4({ onNext }: Step4Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const isDrawing = useRef(false);
+  const scratchCount = useRef(0);
   const [percentCleared, setPercentCleared] = useState(0);
   const [canvasReady, setCanvasReady] = useState(false);
-  const canFinish = percentCleared > 55;
+  const canFinish = percentCleared > 40;
 
   // Initialize canvas with silver overlay
   useEffect(() => {
@@ -78,7 +79,7 @@ export default function Step4({ onNext }: Step4Props) {
 
       ctx.globalCompositeOperation = "destination-out";
       ctx.beginPath();
-      ctx.arc(x, y, 24, 0, Math.PI * 2);
+      ctx.arc(x, y, 32, 0, Math.PI * 2);
       ctx.fill();
     },
     []
@@ -120,9 +121,16 @@ export default function Step4({ onNext }: Step4Props) {
       e.preventDefault();
       if (!isDrawing.current) return;
       const coords = getCoords(e);
-      if (coords) scratch(coords.x, coords.y);
+      if (coords) {
+        scratch(coords.x, coords.y);
+        scratchCount.current++;
+        // Recalculate every 15 strokes so progress updates during scratching
+        if (scratchCount.current % 15 === 0) {
+          calculateCleared();
+        }
+      }
     },
-    [getCoords, scratch]
+    [getCoords, scratch, calculateCleared]
   );
 
   const handleEnd = useCallback(() => {
