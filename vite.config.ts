@@ -3,6 +3,6 @@ import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 
 export default defineConfig({
-  base: "/toyboy/", // required for GitHub Pages (https://futuroelectra.github.io/toyboy/)
+  base: "./", // relative paths work at any URL (e.g. .../toyboy/ or .../toyboy/index.html)
   plugins: [react(), tailwindcss()],
 });
